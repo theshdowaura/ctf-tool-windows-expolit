@@ -1,0 +1,47 @@
+name: MSBuild
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        dir:
+          - CVE-2023-21768
+          - CVE-2023-28218
+          - CVE-2024-38054
+          - HEVD-exploit
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Build
+        working-directory: ${{ github.workspace }}/${{ matrix.dir }}
+        run: msbuild poc.sln -t:rebuild -property:Configuration=${{ env.BUILD_CONFIGURATION }}
+
+      - name: Package
+        working-directory: ${{ github.workspace }}/${{ matrix.dir }}
+        run: Compress-Archive -Path ./X64 -Destination prebuild_driver.zip
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          token: ${{ secrets.REPO_TOKEN }}
+          tag_name: prebuild_driver-${{ matrix.dir }}
+          name: Release ${{ github.sha }} - ${{ matrix.dir }}
+          body: this commit {{ github.sha }}auto gen Release。
+          draft: false
+          prerelease: false
+          files: |
+            prebuild_driver.zip
