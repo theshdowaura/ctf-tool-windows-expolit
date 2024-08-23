@@ -27,11 +27,11 @@ jobs:
         uses: microsoft/setup-msbuild@v1
 
       - name: Build
-        working-directory: ${{ github.workspace }}/${{ matrix.dir }}
-        run: msbuild poc.sln -t:rebuild -property:Configuration=${{ env.BUILD_CONFIGURATION }}
+        working-directory: ${{ github.workspace }}/${{ matrix.dir }}/exploit
+        run: msbuild exploit.sln -t:rebuild -property:Configuration=${{ env.BUILD_CONFIGURATION }}
 
       - name: Package
-        working-directory: ${{ github.workspace }}/${{ matrix.dir }}
+        working-directory: ${{ github.workspace }}/${{ matrix.dir }}/exploit
         run: Compress-Archive -Path ./X64 -Destination prebuild_driver.zip
 
       - name: Release
@@ -44,4 +44,4 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            prebuild_driver.zip
+            prebuild_driver${{github.sha}}.zip
